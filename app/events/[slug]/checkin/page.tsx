@@ -27,23 +27,24 @@ export default async function CheckinPage({ params }: Props) {
   const checkedInCount = (rsvps ?? []).filter((r: RSVP) => r.checked_in).length;
 
   return (
-    <div className="min-h-screen pt-20">
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <Link href={`/events/${slug}`} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to Event
+    <div style={{ minHeight: '100vh', padding: '80px 0 80px' }}>
+      <div style={{ maxWidth: '768px', margin: '0 auto', padding: '0 24px' }}>
+
+        <Link href={`/events/${slug}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748B', textDecoration: 'none', marginBottom: '24px' }}>
+          <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Event
         </Link>
 
-        <div className="flex items-center justify-between mb-6">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
           <div>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Check-In</h1>
-            <p className="text-slate-400 text-sm mt-1">{event.title}</p>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>Check-In</h1>
+            <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>{event.title}</p>
           </div>
-          <div className="glass rounded-xl px-4 py-3 text-center">
-            <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xl">
-              <Users className="w-5 h-5" />
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '12px 20px', textAlign: 'center', backdropFilter: 'blur(16px)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#34D399', fontWeight: 800, fontSize: '1.25rem', fontFamily: 'Space Grotesk, sans-serif' }}>
+              <Users style={{ width: '18px', height: '18px' }} />
               {checkedInCount} / {(rsvps ?? []).length}
             </div>
-            <div className="text-xs text-slate-400 mt-0.5">Checked in</div>
+            <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>Checked in</div>
           </div>
         </div>
 

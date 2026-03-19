@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Search, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { RSVP } from '@/types';
-import { cn } from '@/lib/utils';
 
 interface Props {
   rsvps: (RSVP & { profile: { full_name: string } })[];
@@ -32,41 +31,71 @@ export default function CheckinClient({ rsvps: initialRsvps, eventId }: Props) {
     setLoading(null);
   };
 
+  // suppress unused import warning
+  void eventId;
+
   return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Search */}
+      <div style={{ position: 'relative' }}>
+        <Search style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '15px', height: '15px', color: '#475569', pointerEvents: 'none' }} />
         <input
           type="search"
           placeholder="Search attendees..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input-dark w-full pl-11 pr-4 py-3 rounded-xl text-sm"
+          style={{
+            width: '100%',
+            padding: '12px 16px 12px 42px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            fontSize: '14px',
+            color: '#F8FAFC',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
         />
       </div>
 
-      <div className="space-y-2">
+      {/* Attendee list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {filtered.map((rsvp) => (
-          <div key={rsvp.id} className={cn('glass rounded-xl p-4 flex items-center gap-4 transition-all', rsvp.checked_in && 'border-emerald-500/30 bg-emerald-500/5')}>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-              style={{ background: rsvp.checked_in ? 'rgba(16,185,129,0.3)' : 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>
-              {rsvp.checked_in ? <Check className="w-4 h-4 text-emerald-400" /> : rsvp.profile?.full_name?.[0]?.toUpperCase() ?? '?'}
+          <div
+            key={rsvp.id}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '16px',
+              padding: '14px 16px', borderRadius: '14px',
+              background: rsvp.checked_in ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${rsvp.checked_in ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.08)'}`,
+              backdropFilter: 'blur(16px)',
+            }}
+          >
+            <div
+              style={{
+                width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '13px', fontWeight: 700, color: rsvp.checked_in ? '#34D399' : '#fff',
+                background: rsvp.checked_in ? 'rgba(16,185,129,0.2)' : 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+              }}
+            >
+              {rsvp.checked_in ? <Check style={{ width: '16px', height: '16px' }} /> : rsvp.profile?.full_name?.[0]?.toUpperCase() ?? '?'}
             </div>
-            <div className="flex-1">
-              <div className="font-medium text-white">{rsvp.profile?.full_name ?? 'Attendee'}</div>
-              {rsvp.checked_in && <div className="text-xs text-emerald-400">Checked in</div>}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>{rsvp.profile?.full_name ?? 'Attendee'}</div>
+              {rsvp.checked_in && <div style={{ fontSize: '12px', color: '#34D399', marginTop: '2px' }}>Checked in</div>}
             </div>
             <button
               onClick={() => handleCheckin(rsvp.id, rsvp.checked_in)}
               disabled={loading === rsvp.id}
-              className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium transition-all min-w-[90px]',
-                rsvp.checked_in
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10'
-                  : 'text-white hover:opacity-90',
-                loading === rsvp.id && 'opacity-50'
-              )}
-              style={!rsvp.checked_in ? { background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' } : {}}
+              style={{
+                padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                minWidth: '90px', cursor: loading === rsvp.id ? 'not-allowed' : 'pointer',
+                opacity: loading === rsvp.id ? 0.5 : 1,
+                ...(rsvp.checked_in
+                  ? { background: 'rgba(16,185,129,0.12)', color: '#34D399', border: '1px solid rgba(16,185,129,0.3)' }
+                  : { background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', color: '#fff', border: 'none' }),
+              }}
             >
               {loading === rsvp.id ? '...' : rsvp.checked_in ? '✓ Done' : 'Check In'}
             </button>
@@ -74,7 +103,7 @@ export default function CheckinClient({ rsvps: initialRsvps, eventId }: Props) {
         ))}
 
         {filtered.length === 0 && (
-          <div className="glass rounded-xl p-8 text-center text-slate-400">
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '48px', textAlign: 'center', color: '#64748B', fontSize: '14px' }}>
             No attendees found
           </div>
         )}

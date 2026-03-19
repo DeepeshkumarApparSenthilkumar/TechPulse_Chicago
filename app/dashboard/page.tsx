@@ -10,124 +10,133 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth/login');
 
-  // My hosted events
   const { data: hostedEvents } = await supabase
-    .from('events')
-    .select('*')
-    .eq('organizer_id', user.id)
-    .order('start_time', { ascending: false })
-    .limit(10);
+    .from('events').select('*').eq('organizer_id', user.id)
+    .order('start_time', { ascending: false }).limit(10);
 
-  // My RSVPs
   const { data: myRsvps } = await supabase
-    .from('rsvps')
-    .select('*, event:events(*)')
-    .eq('user_id', user.id)
-    .eq('status', 'going')
+    .from('rsvps').select('*, event:events(*)')
+    .eq('user_id', user.id).eq('status', 'going')
     .gte('events.start_time', new Date().toISOString())
-    .order('created_at', { ascending: false })
-    .limit(10);
+    .order('created_at', { ascending: false }).limit(10);
 
-  // Profile
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
+  const card: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '16px',
+    padding: '16px',
+    display: 'flex', alignItems: 'center', gap: '16px',
+    textDecoration: 'none',
+  };
+
   return (
-    <div className="min-h-screen pt-20 page-transition">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div style={{ minHeight: '100vh', padding: '48px 0 80px' }} className="page-transition">
+      <div style={{ maxWidth: '1152px', margin: '0 auto', padding: '0 24px' }}>
+
         {/* Header */}
-        <div className="flex items-center justify-between mb-10">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', gap: '16px', flexWrap: 'wrap' }}>
           <div>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>
               Welcome back, <span className="gradient-text">{profile?.full_name?.split(' ')[0] ?? 'there'}</span>!
             </h1>
-            <p className="text-slate-400 mt-1 capitalize">Role: {profile?.role ?? 'member'}</p>
+            <p style={{ color: '#64748B', marginTop: '4px', fontSize: '14px', textTransform: 'capitalize' }}>
+              Role: {profile?.role ?? 'member'}
+            </p>
           </div>
-          <Link
-            href="/create-event"
-            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}
-          >
-            <Plus className="w-4 h-4" /> Host Event
+          <Link href="/create-event" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '11px 22px', borderRadius: '12px',
+            fontSize: '14px', fontWeight: 700, color: '#fff',
+            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+            textDecoration: 'none', boxShadow: '0 4px 16px rgba(59,130,246,0.35)',
+          }}>
+            <Plus style={{ width: '16px', height: '16px' }} /> Host Event
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Two column grid */}
+        <div className="grid-2col" style={{ marginBottom: '32px' }}>
           {/* Upcoming RSVPs */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>My Upcoming Events</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Calendar style={{ width: '18px', height: '18px', color: '#60A5FA' }} />
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>My Upcoming Events</h2>
             </div>
             {myRsvps && myRsvps.length > 0 ? (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {(myRsvps as (RSVP & { event: Event })[]).map((rsvp) => rsvp.event && (
-                  <Link key={rsvp.id} href={`/events/${rsvp.event.slug}`} className="glass glass-hover rounded-xl p-4 flex items-center gap-4 group">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3))' }}>
-                      ⚡
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-white truncate group-hover:text-blue-400 transition-colors">{rsvp.event.title}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{formatEventDateTime(rsvp.event.start_time)}</div>
+                  <Link key={rsvp.id} href={`/events/${rsvp.event.slug}`} style={card} className="glass-hover">
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>⚡</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: '#fff', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rsvp.event.title}</div>
+                      <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{formatEventDateTime(rsvp.event.start_time)}</div>
                     </div>
                     {rsvp.event.category && (
-                      <span className={`px-2 py-0.5 rounded text-xs flex-shrink-0 ${getCategoryClass(rsvp.event.category)}`}>{rsvp.event.category}</span>
+                      <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '6px', flexShrink: 0 }} className={getCategoryClass(rsvp.event.category)}>{rsvp.event.category}</span>
                     )}
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className="glass rounded-xl p-6 text-center">
-                <Calendar className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm">No upcoming RSVPs</p>
-                <Link href="/events" className="text-blue-400 text-sm hover:underline mt-2 inline-block">Explore events →</Link>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '32px', textAlign: 'center' }}>
+                <Calendar style={{ width: '32px', height: '32px', color: '#475569', margin: '0 auto 8px' }} />
+                <p style={{ color: '#94A3B8', fontSize: '14px', marginBottom: '12px' }}>No upcoming RSVPs</p>
+                <Link href="/events" style={{ color: '#60A5FA', fontSize: '13px', textDecoration: 'none' }}>Explore events →</Link>
               </div>
             )}
           </div>
 
           {/* Hosted Events */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-purple-400" />
-              <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Events I'm Hosting</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Users style={{ width: '18px', height: '18px', color: '#C084FC' }} />
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>Events I&apos;m Hosting</h2>
             </div>
             {hostedEvents && hostedEvents.length > 0 ? (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {(hostedEvents as Event[]).map((event) => (
-                  <div key={event.id} className="glass rounded-xl p-4 flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-white truncate">{event.title}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{formatEventDateTime(event.start_time)} · {event.rsvp_count} RSVPs</div>
+                  <div key={event.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: '#fff', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</div>
+                      <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{formatEventDateTime(event.start_time)} · {event.rsvp_count} RSVPs</div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`px-2 py-0.5 rounded text-xs ${event.status === 'published' ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/30' : 'text-slate-400 bg-white/5 border border-white/10'}`}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                      <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, ...(event.status === 'published' ? { color: '#34D399', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' } : { color: '#94A3B8', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }) }}>
                         {event.status}
                       </span>
-                      <Link href={`/events/${event.slug}/checkin`} className="text-xs text-blue-400 hover:underline">Check-in</Link>
+                      <Link href={`/events/${event.slug}/checkin`} style={{ fontSize: '12px', color: '#60A5FA', textDecoration: 'none' }}>Check-in</Link>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="glass rounded-xl p-6 text-center">
-                <Plus className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm">You haven&apos;t hosted any events yet</p>
-                <Link href="/create-event" className="text-blue-400 text-sm hover:underline mt-2 inline-block">Host your first event →</Link>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '32px', textAlign: 'center' }}>
+                <Plus style={{ width: '32px', height: '32px', color: '#475569', margin: '0 auto 8px' }} />
+                <p style={{ color: '#94A3B8', fontSize: '14px', marginBottom: '12px' }}>You haven&apos;t hosted any events yet</p>
+                <Link href="/create-event" style={{ color: '#60A5FA', fontSize: '13px', textDecoration: 'none' }}>Host your first event →</Link>
               </div>
             )}
           </div>
         </div>
 
         {/* Quick links */}
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid-3col">
           {[
-            { href: '/events', label: 'Explore Events', icon: '🔍' },
+            { href: '/events',   label: 'Explore Events',    icon: '🔍' },
             { href: '/newsletter', label: 'FinOps Newsletter', icon: '📧' },
             { href: `/profile/${profile?.username ?? ''}`, label: 'Edit Profile', icon: '👤' },
           ].map((item) => (
-            <Link key={item.href} href={item.href} className="glass glass-hover rounded-xl p-4 flex items-center gap-3 group">
-              <span className="text-2xl">{item.icon}</span>
-              <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{item.label}</span>
-              <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-blue-400 ml-auto transition-colors" />
+            <Link key={item.href} href={item.href} style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '16px', borderRadius: '14px', textDecoration: 'none',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              transition: 'all 0.2s ease',
+            }} className="glass-hover">
+              <span style={{ fontSize: '22px' }}>{item.icon}</span>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: '#CBD5E1', flex: 1 }}>{item.label}</span>
+              <ArrowRight style={{ width: '15px', height: '15px', color: '#475569', flexShrink: 0 }} />
             </Link>
           ))}
         </div>

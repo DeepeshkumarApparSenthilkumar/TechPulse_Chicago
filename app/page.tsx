@@ -1,32 +1,33 @@
+export const revalidate = 60; // cache for 60 seconds
+
 import HeroSection from '@/components/hero/HeroSection';
 import EventCard from '@/components/events/EventCard';
 import SubscribeForm from '@/components/newsletter/SubscribeForm';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { ArrowRight, Zap, Brain, Cloud, Network } from 'lucide-react';
+import { ArrowRight, Brain, Cloud, Network, Zap } from 'lucide-react';
 import type { Event } from '@/types';
 
 const categories = [
-  { name: 'AI/ML', icon: Brain, catClass: 'cat-ai' },
-  { name: 'Web Dev', icon: Zap, catClass: 'cat-web' },
-  { name: 'DevOps', icon: Cloud, catClass: 'cat-devops' },
-  { name: 'FinOps', icon: Cloud, catClass: 'cat-finops' },
-  { name: 'Startup', icon: Zap, catClass: 'cat-startup' },
-  { name: 'Networking', icon: Network, catClass: 'cat-networking' },
+  { name: 'AI/ML',       icon: Brain,   catClass: 'cat-ai' },
+  { name: 'Web Dev',     icon: Zap,     catClass: 'cat-web' },
+  { name: 'DevOps',      icon: Cloud,   catClass: 'cat-devops' },
+  { name: 'FinOps',      icon: Cloud,   catClass: 'cat-finops' },
+  { name: 'Startup',     icon: Zap,     catClass: 'cat-startup' },
+  { name: 'Networking',  icon: Network, catClass: 'cat-networking' },
 ];
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const { data: events } = await supabase
-    .from('events')
-    .select('*, organizer:profiles(*)')
-    .eq('status', 'published')
-    .gte('start_time', new Date().toISOString())
-    .order('start_time', { ascending: true })
-    .limit(6);
-
-  const [{ count: eventCount }, { count: memberCount }, { count: orgCount }] = await Promise.all([
+  const [{ data: events }, { count: eventCount }, { count: memberCount }, { count: orgCount }] = await Promise.all([
+    supabase
+      .from('events')
+      .select('*, organizer:profiles(*)')
+      .eq('status', 'published')
+      .gte('start_time', new Date().toISOString())
+      .order('start_time', { ascending: true })
+      .limit(6),
     supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'organizer'),
@@ -38,89 +39,175 @@ export default async function HomePage() {
     <div className="page-transition">
       <HeroSection stats={stats} />
 
-      {/* Category Pills */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            Explore by <span className="gradient-text">Category</span>
-          </h2>
-          <p className="text-slate-400">Find events that match your interests</p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-3">
-          {categories.map(({ name, icon: Icon, catClass }) => (
-            <Link
-              key={name}
-              href={`/events?category=${encodeURIComponent(name)}`}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105 ${catClass}`}
-            >
-              <Icon className="w-4 h-4" />
-              {name}
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* ── Section divider ── */}
+      <div className="section-divider" />
 
-      {/* Featured Events */}
-      {events && events.length > 0 && (
-        <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                Upcoming <span className="gradient-text">Events</span>
-              </h2>
-              <p className="text-slate-400 mt-1">Don&apos;t miss what&apos;s happening in Chicago&apos;s tech scene</p>
-            </div>
-            <Link href="/events" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors">
-              View all <ArrowRight className="w-4 h-4" />
-            </Link>
+      {/* ── Categories ── */}
+      <section style={{ padding: '96px 0 80px' }}>
+        <div className="container-page">
+          <div style={{ textAlign: 'center', marginBottom: '52px' }}>
+            <div className="section-label">✦ Browse Topics</div>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 700, color: '#fff', marginBottom: '12px', fontFamily: 'Space Grotesk, sans-serif' }}>
+              Explore by <span className="gradient-text">Category</span>
+            </h2>
+            <p style={{ color: '#94A3B8', fontSize: '1rem', maxWidth: '420px', margin: '0 auto', lineHeight: 1.7 }}>Find events that match your interests and expertise</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(events as Event[]).map((event) => (
-              <EventCard key={event.id} event={event} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '14px' }}>
+            {categories.map(({ name, icon: Icon, catClass }) => (
+              <Link
+                key={name}
+                href={`/events?category=${encodeURIComponent(name)}`}
+                className={catClass}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '12px 24px', borderRadius: '100px',
+                  fontSize: '14px', fontWeight: 600, textDecoration: 'none',
+                  transition: 'all 0.2s ease', whiteSpace: 'nowrap',
+                }}
+              >
+                <Icon style={{ width: '16px', height: '16px' }} />
+                {name}
+              </Link>
             ))}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* Newsletter CTA */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass rounded-3xl p-8 sm:p-12 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, #8B5CF6, transparent)' }} />
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-4 cat-finops">🤖 AI-Powered</div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                Stay on top of <span className="gradient-text">FinOps</span>
-              </h2>
-              <p className="text-slate-400 leading-relaxed mb-6">
-                Our AI (Claude) searches the web every month to compile the latest pricing changes, cost optimizations, and FinOps updates across Snowflake, Databricks, BigQuery, Redshift, and Azure Fabric.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {['Snowflake', 'Databricks', 'BigQuery', 'Redshift', 'Azure'].map((p) => (
-                  <span key={p} className="px-3 py-1 rounded-full text-xs cat-finops">{p}</span>
+      <div className="section-divider" />
+
+      {/* ── Upcoming Events ── */}
+      <section style={{ padding: '96px 0' }}>
+        <div className="container-page">
+          {events && events.length > 0 ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '48px', gap: '16px', flexWrap: 'wrap' }}>
+                <div>
+                  <div className="section-label">📅 What&apos;s On</div>
+                  <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 700, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>
+                    Upcoming <span className="gradient-text">Events</span>
+                  </h2>
+                  <p style={{ color: '#94A3B8', marginTop: '8px', fontSize: '0.95rem' }}>
+                    Don&apos;t miss what&apos;s happening in Chicago&apos;s tech scene
+                  </p>
+                </div>
+                <Link href="/events" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '10px 20px', borderRadius: '10px',
+                  fontSize: '14px', fontWeight: 600, color: '#60A5FA',
+                  background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)',
+                  textDecoration: 'none', whiteSpace: 'nowrap', transition: 'all 0.2s',
+                }}>
+                  View all <ArrowRight style={{ width: '15px', height: '15px' }} />
+                </Link>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+                {(events as Event[]).map((event) => (
+                  <EventCard key={event.id} event={event} />
                 ))}
               </div>
+            </>
+          ) : (
+            <div className="glass" style={{ borderRadius: '24px', padding: '80px 40px', textAlign: 'center' }}>
+              <div style={{ fontSize: '56px', marginBottom: '20px' }}>🎉</div>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', marginBottom: '12px', fontFamily: 'Space Grotesk, sans-serif' }}>No events yet</h3>
+              <p style={{ color: '#94A3B8', marginBottom: '32px', fontSize: '1rem', maxWidth: '380px', margin: '0 auto 32px' }}>Be the first to host an event for Chicago&apos;s tech community.</p>
+              <Link href="/create-event" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '14px 32px', borderRadius: '12px', fontSize: '15px',
+                fontWeight: 700, color: '#fff',
+                background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', textDecoration: 'none',
+              }}>
+                Host an Event <ArrowRight style={{ width: '16px', height: '16px' }} />
+              </Link>
             </div>
-            <SubscribeForm />
+          )}
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ── FinOps Newsletter CTA ── */}
+      <section style={{ padding: '96px 0' }}>
+        <div className="container-page">
+          <div style={{
+            background: 'linear-gradient(135deg, #080F28 0%, #0A1530 50%, #06102A 100%)',
+            border: '1px solid rgba(59,130,246,0.22)',
+            borderRadius: '28px',
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: '0 0 80px rgba(59,130,246,0.06), 0 32px 64px rgba(0,0,0,0.5)',
+          }}>
+            {/* Decorative glows */}
+            <div style={{ position: 'absolute', top: '-120px', right: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.12), transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.08), transparent 70%)', pointerEvents: 'none' }} />
+
+            <div className="finops-cta-grid">
+              {/* Left */}
+              <div className="finops-left" style={{ padding: '56px 48px' }}>
+                <div className="cat-finops" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', borderRadius: '100px', fontSize: '11px', fontWeight: 700, marginBottom: '24px', letterSpacing: '0.05em' }}>
+                  🤖 AI-Powered · Monthly Digest
+                </div>
+                <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: '20px', fontFamily: 'Space Grotesk, sans-serif' }}>
+                  Stay ahead of<br />
+                  <span className="gradient-text">FinOps changes</span>
+                </h2>
+                <p style={{ color: '#94A3B8', lineHeight: 1.8, marginBottom: '32px', fontSize: '0.95rem', maxWidth: '400px' }}>
+                  Claude AI searches official vendor docs, release notes, and pricing pages every month — one evidence-backed digest covering all 5 major platforms.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '36px' }}>
+                  {['Snowflake', 'Databricks', 'BigQuery', 'Redshift', 'Azure Fabric'].map((p) => (
+                    <span key={p} className="cat-finops" style={{ padding: '5px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600 }}>{p}</span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '32px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  {[['100%', 'Evidence-backed'], ['Free', 'Always'], ['Monthly', 'Digest']].map(([val, label]) => (
+                    <div key={label}>
+                      <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>{val}</div>
+                      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right — distinct background so it reads as a panel */}
+              <div style={{
+                padding: '48px 44px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                background: 'rgba(255,255,255,0.02)',
+              }}>
+                <SubscribeForm />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Host CTA */}
-      <section className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-          Ready to <span className="gradient-text">Host?</span>
-        </h2>
-        <p className="text-slate-400 mb-8 max-w-xl mx-auto">
-          Share your knowledge with Chicago&apos;s tech community. Free RSVP, no ticketing fees, easy setup.
-        </p>
-        <Link
-          href="/create-event"
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-0.5"
-          style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}
-        >
-          Host an Event <ArrowRight className="w-4 h-4" />
-        </Link>
+      <div className="section-divider" />
+
+      {/* ── Host CTA ── */}
+      <section style={{ padding: '96px 0 112px' }}>
+        <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 24px' }}>
+          <div className="glass" style={{ borderRadius: '28px', padding: '72px 56px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            {/* Glow */}
+            <div style={{ position: 'absolute', top: '-60px', left: '50%', transform: 'translateX(-50%)', width: '400px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.12), transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative' }}>
+              <div className="cat-web" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', borderRadius: '100px', fontSize: '11px', fontWeight: 700, marginBottom: '24px', letterSpacing: '0.05em' }}>
+                🎤 Community Speakers
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: '#fff', marginBottom: '20px', fontFamily: 'Space Grotesk, sans-serif' }}>
+                Ready to <span className="gradient-text">Host?</span>
+              </h2>
+              <p style={{ color: '#94A3B8', marginBottom: '40px', maxWidth: '460px', margin: '0 auto 40px', lineHeight: 1.8, fontSize: '1rem' }}>
+                Share your knowledge with Chicago&apos;s tech community. Free RSVP system, no ticketing fees, and simple event setup.
+              </p>
+              <Link href="/create-event" className="hero-btn-primary">
+                Host an Event <ArrowRight style={{ width: '18px', height: '18px' }} />
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { email, name, topics } = await request.json();
 
   if (!email || !email.includes('@')) {

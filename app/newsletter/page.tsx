@@ -2,7 +2,30 @@ import { createClient } from '@/lib/supabase/server';
 import SubscribeForm from '@/components/newsletter/SubscribeForm';
 import Link from 'next/link';
 import { formatEventDate } from '@/lib/utils';
+import { ArrowRight } from 'lucide-react';
 import type { NewsletterIssue } from '@/types';
+
+const platforms = [
+  { name: 'Snowflake',     icon: '❄️' },
+  { name: 'Databricks',    icon: '🧱' },
+  { name: 'BigQuery',      icon: '🔍' },
+  { name: 'Redshift',      icon: '🔴' },
+  { name: 'Azure Fabric',  icon: '☁️' },
+];
+
+const features = [
+  { icon: '🔍', title: 'AI Web Search',     desc: 'Claude searches vendor docs, release notes, and official blogs every month — no manual research needed.' },
+  { icon: '📊', title: 'Evidence-Backed',   desc: 'Every claim verified against official sources with citations. No hallucinations, ever.' },
+  { icon: '💡', title: 'Actionable Insights',desc: 'Executive summary + practitioner deep-dive with optimization plays and action checklists.' },
+];
+
+const glassCard: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '16px',
+  padding: '24px',
+  backdropFilter: 'blur(16px)',
+};
 
 export default async function NewsletterPage() {
   const supabase = await createClient();
@@ -14,82 +37,96 @@ export default async function NewsletterPage() {
     .limit(12);
 
   return (
-    <div className="min-h-screen pt-20 page-transition">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div style={{ minHeight: '100vh', padding: '64px 0 96px' }} className="page-transition">
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px' }}>
+
         {/* Header */}
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-4 cat-finops">
-            🤖 AI-Powered · Monthly
+        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <div className="cat-finops" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', borderRadius: '100px', fontSize: '11px', fontWeight: 700, marginBottom: '24px' }}>
+            🤖 AI-Powered · Monthly Digest
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            FinOps <span className="gradient-text">Intelligence</span> Digest
+          <h1 style={{ fontSize: 'clamp(2.4rem, 5vw, 3.5rem)', fontWeight: 800, color: '#fff', marginBottom: '20px', lineHeight: 1.1, fontFamily: 'Space Grotesk, sans-serif' }}>
+            FinOps <span className="gradient-text">Intelligence</span><br />Digest
           </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-            Every month, our AI (Claude) web-searches for the latest pricing changes, cost optimizations, and FinOps updates — compiled into one expert digest.
+          <p style={{ fontSize: '1.05rem', color: '#94A3B8', maxWidth: '560px', margin: '0 auto', lineHeight: 1.8 }}>
+            Every month, Claude AI searches for the latest pricing changes, cost optimizations, and FinOps updates — compiled into one evidence-backed digest.
           </p>
         </div>
 
         {/* Platform coverage */}
-        <div className="glass rounded-2xl p-6 mb-12">
-          <h2 className="text-lg font-semibold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Platforms Covered</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {['Snowflake', 'Databricks', 'BigQuery', 'Redshift', 'Azure Fabric'].map((p) => (
-              <div key={p} className="glass rounded-xl p-3 text-center">
-                <div className="text-2xl mb-1">☁️</div>
-                <div className="text-xs font-medium text-slate-300">{p}</div>
+        <div style={{ ...glassCard, marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '20px', textAlign: 'center', fontFamily: 'Space Grotesk, sans-serif' }}>
+            Platforms Covered Every Month
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+            {platforms.map((p) => (
+              <div key={p.name} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '16px 8px', textAlign: 'center', transition: 'border-color 0.2s' }}>
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>{p.icon}</div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#CBD5E1' }}>{p.name}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* What Claude does */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-          {[
-            { icon: '🔍', title: 'AI Web Search', desc: 'Claude searches vendor docs, release notes, and official blogs every month' },
-            { icon: '📊', title: 'Evidence-Backed', desc: 'Every claim is verified against official sources — no hallucinations, all citations included' },
-            { icon: '💡', title: 'Actionable Insights', desc: 'Executive summary + practitioner deep-dive with optimization plays and action checklists' },
-          ].map((item) => (
-            <div key={item.title} className="glass rounded-2xl p-5">
-              <div className="text-3xl mb-3">{item.icon}</div>
-              <h3 className="font-semibold text-white mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{item.title}</h3>
-              <p className="text-sm text-slate-400">{item.desc}</p>
+        {/* Feature cards */}
+        <div className="grid-3col" style={{ marginBottom: '48px' }}>
+          {features.map((item) => (
+            <div key={item.title} style={{ ...glassCard, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ fontSize: '28px' }}>{item.icon}</div>
+              <h3 style={{ fontWeight: 700, color: '#fff', fontSize: '15px', fontFamily: 'Space Grotesk, sans-serif' }}>{item.title}</h3>
+              <p style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1.7 }}>{item.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Subscribe form */}
-        <div className="max-w-xl mx-auto mb-16">
+        <div style={{ maxWidth: '520px', margin: '0 auto 64px' }}>
           <SubscribeForm />
         </div>
 
         {/* Archive */}
         {issues && issues.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              Past <span className="gradient-text">Issues</span>
-            </h2>
-            <div className="space-y-3">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>
+                Past <span className="gradient-text">Issues</span>
+              </h2>
+              <span style={{ fontSize: '13px', color: '#64748B' }}>{issues.length} issues</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {(issues as NewsletterIssue[]).map((issue) => (
-                <Link
-                  key={issue.id}
-                  href={`/newsletter/${issue.id}`}
-                  className="glass glass-hover rounded-xl p-5 flex items-center justify-between group"
-                >
-                  <div>
-                    <div className="font-medium text-white group-hover:text-blue-400 transition-colors" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                <Link key={issue.id} href={`/newsletter/${issue.id}`} style={{
+                  ...glassCard, padding: '18px 20px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  textDecoration: 'none', transition: 'all 0.2s ease',
+                }} className="glass-hover">
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontWeight: 600, color: '#fff', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Space Grotesk, sans-serif' }}>
                       {issue.subject ?? `FinOps Digest — ${issue.month_year}`}
                     </div>
-                    <div className="text-sm text-slate-400 mt-1">{issue.preview_text ?? issue.month_year}</div>
+                    <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {issue.preview_text ?? issue.month_year}
+                    </div>
                   </div>
-                  <div className="text-right ml-4 flex-shrink-0">
-                    <div className="text-xs text-slate-400">{issue.sent_at ? formatEventDate(issue.sent_at) : issue.month_year}</div>
-                    {issue.recipient_count && (
-                      <div className="text-xs text-slate-500 mt-0.5">{issue.recipient_count} recipients</div>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: '16px', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '12px', color: '#64748B' }}>{issue.sent_at ? formatEventDate(issue.sent_at) : issue.month_year}</div>
+                      {issue.recipient_count ? <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>{issue.recipient_count} recipients</div> : null}
+                    </div>
+                    <ArrowRight style={{ width: '15px', height: '15px', color: '#475569' }} />
                   </div>
                 </Link>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {(!issues || issues.length === 0) && (
+          <div style={{ ...glassCard, padding: '64px 32px', textAlign: 'center' }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>📬</div>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', marginBottom: '8px', fontFamily: 'Space Grotesk, sans-serif' }}>First issue coming soon</h3>
+            <p style={{ color: '#94A3B8', fontSize: '14px' }}>Subscribe above to be notified when the first digest is published.</p>
           </div>
         )}
       </div>
