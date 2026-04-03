@@ -24,6 +24,9 @@ create table if not exists profiles (
   created_at timestamp with time zone default now()
 );
 
+-- Index for counting by roles, which is used heavily on the homepage
+create index if not exists profiles_role_idx on profiles(role);
+
 -- Auto-create profile on signup
 create or replace function handle_new_user()
 returns trigger as $$

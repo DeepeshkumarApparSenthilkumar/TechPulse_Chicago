@@ -20,20 +20,28 @@ const categories = [
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [{ data: events }, { count: eventCount }, { count: memberCount }, { count: orgCount }] = await Promise.all([
-    supabase
-      .from('events')
-      .select('*, organizer:profiles(*)')
-      .eq('status', 'published')
-      .gte('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true })
-      .limit(6),
-    supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'published'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'organizer'),
-  ]);
+  let events: Event[] = [];
+  let stats = { events: 0, members: 0, organizers: 0 };
 
-  const stats = { events: eventCount ?? 0, members: memberCount ?? 0, organizers: orgCount ?? 0 };
+  try {
+    const [{ data: eventsData }, { count: eventCount }, { count: memberCount }, { count: orgCount }] = await Promise.all([
+      supabase
+        .from('events')
+        .select('*, organizer:profiles(*)')
+        .eq('status', 'published')
+        .gte('start_time', new Date().toISOString())
+        .order('start_time', { ascending: true })
+        .limit(6),
+      supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'published'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'organizer'),
+    ]);
+    
+    events = (eventsData as Event[]) || [];
+    stats = { events: eventCount ?? 0, members: memberCount ?? 0, organizers: orgCount ?? 0 };
+  } catch (error) {
+    console.warn('Supabase fetch failed (likely missing valid .env.local keys). Loading fallback UI.');
+  }
 
   return (
     <div className="page-transition">
