@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import type { NewsletterIssue } from '@/types';
+import sanitizeHtml from 'sanitize-html';
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -13,6 +14,27 @@ export default async function NewsletterIssuePage({ params }: Props) {
 
   if (!issue) notFound();
   const ni = issue as NewsletterIssue;
+
+  const safeHtml = ni.html_body
+    ? sanitizeHtml(ni.html_body, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'h3', 'h4', 'img']),
+        allowedAttributes: {
+          ...sanitizeHtml.defaults.allowedAttributes,
+          // Restrict style/class to block-level elements only — not all elements,
+          // as allowing inline styles on '*' enables CSS-based injection attacks.
+          div: ['style', 'class'],
+          p: ['style', 'class'],
+          span: ['style', 'class'],
+          table: ['style', 'class', 'cellpadding', 'cellspacing', 'width'],
+          tr: ['style', 'class'],
+          td: ['style', 'class', 'align', 'valign', 'width', 'colspan', 'rowspan'],
+          th: ['style', 'class', 'align', 'valign', 'width', 'colspan', 'rowspan'],
+          a: ['href', 'target', 'rel'],
+          img: ['src', 'alt', 'width', 'height'],
+        },
+        allowedSchemes: ['https', 'http', 'mailto'],
+      })
+    : null;
 
   return (
     <div className="min-h-screen pt-20 page-transition">
@@ -30,10 +52,10 @@ export default async function NewsletterIssuePage({ params }: Props) {
             {ni.preview_text && <p className="text-slate-400 mt-2">{ni.preview_text}</p>}
           </div>
 
-          {ni.html_body ? (
+          {safeHtml ? (
             <div
               className="p-6 prose prose-invert max-w-none prose-headings:text-white prose-a:text-blue-400"
-              dangerouslySetInnerHTML={{ __html: ni.html_body }}
+              dangerouslySetInnerHTML={{ __html: safeHtml }}
             />
           ) : ni.text_body ? (
             <div className="p-6 text-slate-300 whitespace-pre-wrap leading-relaxed">{ni.text_body}</div>

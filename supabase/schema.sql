@@ -126,7 +126,7 @@ create table if not exists newsletter_subscriptions (
 -- ============================================================
 create table if not exists newsletter_issues (
   id uuid primary key default gen_random_uuid(),
-  month_year text not null,
+  month_year text not null unique,
   subject text,
   preview_text text,
   html_body text,
@@ -158,6 +158,10 @@ alter table rsvps enable row level security;
 create policy "RSVPs are viewable by event organizer and attendee" on rsvps for select using (auth.uid() = user_id or event_id in (select id from events where organizer_id = auth.uid()));
 create policy "Authenticated users can RSVP" on rsvps for insert with check (auth.uid() = user_id);
 create policy "Users can update own RSVPs" on rsvps for update using (auth.uid() = user_id or event_id in (select id from events where organizer_id = auth.uid()));
+
+-- Indexes for newsletter query performance
+create index if not exists newsletter_subscriptions_is_active_idx on newsletter_subscriptions(is_active);
+create index if not exists newsletter_issues_sent_at_idx on newsletter_issues(sent_at);
 
 -- Newsletter subscriptions (public insert, private read)
 alter table newsletter_subscriptions enable row level security;

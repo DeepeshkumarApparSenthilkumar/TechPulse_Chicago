@@ -107,7 +107,7 @@ export default function RSVPButton({ event, compact = false, currentStatus }: RS
             <Check className="w-4 h-4" /> You're Going!
           </>
         ) : (
-          'RSVP — It's Free'
+          <span>RSVP &mdash; It&apos;s Free</span>
         )}
       </button>
       {isGoing && (

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { formatEventDateTime } from '@/lib/utils';
 import type { Event, Profile, NewsletterIssue } from '@/types';
+import GenerateNewsletterButton from './GenerateNewsletterButton';
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -51,11 +52,7 @@ export default async function AdminPage() {
         <div className="glass rounded-2xl p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Newsletter Control</h2>
-            <form action="/api/newsletter/generate" method="POST">
-              <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>
-                🤖 Generate & Send Newsletter
-              </button>
-            </form>
+            <GenerateNewsletterButton />
           </div>
           <div className="space-y-2">
             {(newsletters as NewsletterIssue[] ?? []).map((issue) => (

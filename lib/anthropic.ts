@@ -59,10 +59,11 @@ export async function generateNewsletterContent(monthYear: string): Promise<{
     model: 'claude-sonnet-4-6',
     max_tokens: 8192,
     tools: [
+      // web_search_20250305 is a built-in Anthropic tool; SDK types lag behind
       {
-        type: 'web_search_20250305' as 'web_search_20250305',
+        type: 'web_search_20250305',
         name: 'web_search',
-      } as Anthropic.Messages.Tool,
+      } as unknown as Anthropic.Messages.Tool,
     ],
     system: FINOPS_NEWSLETTER_SYSTEM_PROMPT,
     messages: [
@@ -83,22 +84,33 @@ Return the final newsletter as the JSON structure specified in your system promp
     .map((block) => (block as Anthropic.Messages.TextBlock).text)
     .join('');
 
-  // Try to parse JSON from the response
-  const jsonMatch = textContent.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
+  // Try to parse JSON — prefer JSON code block, fall back to greedy match
+  const jsonBlockMatch = textContent.match(/```json\s*([\s\S]*?)```/);
+  const rawJsonMatch = textContent.match(/\{[\s\S]*\}/);
+  const candidate = jsonBlockMatch?.[1] ?? rawJsonMatch?.[0];
+
+  if (candidate) {
     try {
-      return JSON.parse(jsonMatch[0]);
+      return JSON.parse(candidate);
     } catch {
-      // Fall through to default
+      // Fall through to safe fallback
     }
   }
 
-  // Fallback structure if JSON parsing fails
+  // Fallback: escape text content before embedding in HTML to prevent XSS
+  const escaped = textContent
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\n/g, '<br/>');
+
   return {
     subject: `TechPulse FinOps Digest — ${monthYear}`,
     preview_text: `Monthly FinOps updates for Snowflake, Databricks, BigQuery, Redshift, and Azure Fabric.`,
     markdown_body: textContent,
-    html_body: `<div style="font-family: sans-serif; max-width: 800px; margin: 0 auto;">${textContent.replace(/\n/g, '<br/>')}</div>`,
+    html_body: `<div style="font-family: sans-serif; max-width: 800px; margin: 0 auto;">${escaped}</div>`,
     sources: {},
     metadata: { generated_at: new Date().toISOString(), month_year: monthYear },
   };
