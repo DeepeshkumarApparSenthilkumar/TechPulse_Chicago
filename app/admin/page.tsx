@@ -3,7 +3,14 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { formatEventDateTime } from '@/lib/utils';
 import type { Event, Profile, NewsletterIssue } from '@/types';
-import GenerateNewsletterButton from './GenerateNewsletterButton';
+import { Users, Send } from 'lucide-react';
+
+const row: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  padding: '12px 14px', borderRadius: '10px',
+  background: 'rgba(255,255,255,0.04)',
+  marginBottom: '6px',
+};
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -25,90 +32,106 @@ export default async function AdminPage() {
     supabase.from('newsletter_subscriptions').select('*', { count: 'exact', head: true }).eq('is_active', true),
   ]);
 
+  const glassCard: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '20px', padding: '24px',
+    backdropFilter: 'blur(16px)',
+  };
+
   return (
-    <div className="min-h-screen pt-20 page-transition">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+    <div style={{ minHeight: '100vh', padding: '48px 0 80px' }} className="page-transition">
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>
             Admin <span className="gradient-text">Panel</span>
           </h1>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        <div className="grid-3col" style={{ marginBottom: '32px' }}>
           {[
-            { label: 'Total Events', value: eventCount ?? 0, color: '#3B82F6' },
-            { label: 'Total Members', value: memberCount ?? 0, color: '#8B5CF6' },
-            { label: 'Newsletter Subscribers', value: subCount ?? 0, color: '#06B6D4' },
+            { label: 'Total Events',           value: eventCount ?? 0, color: '#3B82F6' },
+            { label: 'Total Members',          value: memberCount ?? 0, color: '#8B5CF6' },
+            { label: 'Newsletter Subscribers', value: subCount ?? 0,   color: '#06B6D4' },
           ].map((stat) => (
-            <div key={stat.label} className="glass rounded-2xl p-5">
-              <div className="text-3xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif', color: stat.color }}>{stat.value}</div>
-              <div className="text-sm text-slate-400 mt-1">{stat.label}</div>
+            <div key={stat.label} style={glassCard}>
+              <div style={{ fontSize: '2.25rem', fontWeight: 800, color: stat.color, fontFamily: 'Space Grotesk, sans-serif' }}>{stat.value}</div>
+              <div style={{ fontSize: '13px', color: '#64748B', marginTop: '6px' }}>{stat.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Newsletter Control */}
-        <div className="glass rounded-2xl p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Newsletter Control</h2>
-            <GenerateNewsletterButton />
+        {/* Newsletter control */}
+        <div style={{ ...glassCard, marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>Newsletter Control</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Link href="/admin/subscribers" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#CBD5E1', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none' }}>
+                <Users style={{ width: '14px', height: '14px' }} /> Manage Subscribers
+              </Link>
+              <form action="/api/newsletter/generate" method="POST">
+                <button type="submit" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(59,130,246,0.35)' }}>
+                  <Send style={{ width: '14px', height: '14px' }} /> Generate & Send
+                </button>
+              </form>
+            </div>
           </div>
-          <div className="space-y-2">
-            {(newsletters as NewsletterIssue[] ?? []).map((issue) => (
-              <div key={issue.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                <div>
-                  <div className="text-sm font-medium text-white">{issue.subject ?? issue.month_year}</div>
-                  <div className="text-xs text-slate-400">{issue.sent_at ? `Sent ${formatEventDateTime(issue.sent_at)}` : 'Draft'} · {issue.recipient_count ?? 0} recipients</div>
+          {(newsletters as NewsletterIssue[] ?? []).length === 0 ? (
+            <p style={{ fontSize: '13px', color: '#475569' }}>No newsletters sent yet.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {(newsletters as NewsletterIssue[] ?? []).map((issue) => (
+                <div key={issue.id} style={row}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{issue.subject ?? issue.month_year}</div>
+                    <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{issue.sent_at ? `Sent ${formatEventDateTime(issue.sent_at)}` : 'Draft'} · {issue.recipient_count ?? 0} recipients</div>
+                  </div>
+                  <Link href={`/newsletter/${issue.id}`} style={{ fontSize: '12px', color: '#60A5FA', textDecoration: 'none' }}>View</Link>
                 </div>
-                <Link href={`/newsletter/${issue.id}`} className="text-xs text-blue-400 hover:underline">View</Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tables */}
+        <div className="grid-2col">
+          {/* Events */}
+          <div style={glassCard}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', marginBottom: '16px', fontFamily: 'Space Grotesk, sans-serif' }}>Recent Events</h2>
+            {(events as Event[] ?? []).map((event) => (
+              <div key={event.id} style={row}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>{formatEventDateTime(event.start_time)}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '8px', flexShrink: 0 }}>
+                  <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, ...(event.status === 'published' ? { color: '#34D399', background: 'rgba(16,185,129,0.12)' } : { color: '#94A3B8', background: 'rgba(255,255,255,0.06)' }) }}>{event.status}</span>
+                  <Link href={`/events/${event.slug}`} style={{ fontSize: '12px', color: '#60A5FA', textDecoration: 'none' }}>View</Link>
+                </div>
               </div>
             ))}
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Events Table */}
-          <div className="glass rounded-2xl p-6">
-            <h2 className="text-xl font-semibold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Recent Events</h2>
-            <div className="space-y-2">
-              {(events as Event[] ?? []).map((event) => (
-                <div key={event.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white truncate">{event.title}</div>
-                    <div className="text-xs text-slate-400">{formatEventDateTime(event.start_time)}</div>
+          {/* Members */}
+          <div style={glassCard}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', marginBottom: '16px', fontFamily: 'Space Grotesk, sans-serif' }}>Recent Members</h2>
+            {(users as Profile[] ?? []).map((u) => (
+              <div key={u.id} style={row}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#fff' }}>
+                    {u.full_name?.[0]?.toUpperCase() ?? '?'}
                   </div>
-                  <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                    <span className={`px-2 py-0.5 text-xs rounded ${event.status === 'published' ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-400 bg-white/5'}`}>
-                      {event.status}
-                    </span>
-                    <Link href={`/events/${event.slug}`} className="text-xs text-blue-400 hover:underline">View</Link>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.full_name ?? 'Unknown'}</div>
+                    <div style={{ fontSize: '11px', color: '#64748B', textTransform: 'capitalize', marginTop: '2px' }}>{u.role}</div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Users Table */}
-          <div className="glass rounded-2xl p-6">
-            <h2 className="text-xl font-semibold text-white mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Recent Members</h2>
-            <div className="space-y-2">
-              {(users as Profile[] ?? []).map((u) => (
-                <div key={u.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>
-                      {u.full_name?.[0]?.toUpperCase() ?? '?'}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-white truncate">{u.full_name ?? 'Unknown'}</div>
-                      <div className="text-xs text-slate-400 capitalize">{u.role}</div>
-                    </div>
-                  </div>
-                  <Link href={`/profile/${u.username}`} className="text-xs text-blue-400 hover:underline flex-shrink-0 ml-2">Profile</Link>
-                </div>
-              ))}
-            </div>
+                <Link href={`/profile/${u.username}`} style={{ fontSize: '12px', color: '#60A5FA', textDecoration: 'none', flexShrink: 0, marginLeft: '8px' }}>Profile</Link>
+              </div>
+            ))}
           </div>
         </div>
       </div>

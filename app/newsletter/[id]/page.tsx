@@ -20,8 +20,6 @@ export default async function NewsletterIssuePage({ params }: Props) {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'h3', 'h4', 'img']),
         allowedAttributes: {
           ...sanitizeHtml.defaults.allowedAttributes,
-          // Restrict style/class to block-level elements only — not all elements,
-          // as allowing inline styles on '*' enables CSS-based injection attacks.
           div: ['style', 'class'],
           p: ['style', 'class'],
           span: ['style', 'class'],
@@ -37,30 +35,31 @@ export default async function NewsletterIssuePage({ params }: Props) {
     : null;
 
   return (
-    <div className="min-h-screen pt-20 page-transition">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <Link href="/newsletter" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to Newsletter
+    <div style={{ minHeight: '100vh', padding: '80px 0 80px' }} className="page-transition">
+      <div style={{ maxWidth: '896px', margin: '0 auto', padding: '0 24px' }}>
+
+        <Link href="/newsletter" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748B', textDecoration: 'none', marginBottom: '24px' }}>
+          <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Newsletter
         </Link>
 
-        <div className="glass rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-white/10">
-            <span className="text-xs font-medium cat-finops px-2 py-1 rounded-md inline-block mb-3">FinOps Digest</span>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', overflow: 'hidden', backdropFilter: 'blur(16px)' }}>
+          <div style={{ padding: '28px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <span className="cat-finops" style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, marginBottom: '12px' }}>FinOps Digest</span>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1.2 }}>
               {ni.subject ?? `FinOps Digest — ${ni.month_year}`}
             </h1>
-            {ni.preview_text && <p className="text-slate-400 mt-2">{ni.preview_text}</p>}
+            {ni.preview_text && <p style={{ color: '#94A3B8', marginTop: '8px', fontSize: '14px' }}>{ni.preview_text}</p>}
           </div>
 
           {safeHtml ? (
             <div
-              className="p-6 prose prose-invert max-w-none prose-headings:text-white prose-a:text-blue-400"
+              style={{ padding: '28px', color: '#CBD5E1', lineHeight: 1.8, fontSize: '14px' }}
               dangerouslySetInnerHTML={{ __html: safeHtml }}
             />
           ) : ni.text_body ? (
-            <div className="p-6 text-slate-300 whitespace-pre-wrap leading-relaxed">{ni.text_body}</div>
+            <div style={{ padding: '28px', color: '#CBD5E1', whiteSpace: 'pre-wrap', lineHeight: 1.8, fontSize: '14px' }}>{ni.text_body}</div>
           ) : (
-            <div className="p-6 text-slate-400 text-center">No content available for this issue.</div>
+            <div style={{ padding: '48px', color: '#64748B', textAlign: 'center', fontSize: '14px' }}>No content available for this issue.</div>
           )}
         </div>
       </div>

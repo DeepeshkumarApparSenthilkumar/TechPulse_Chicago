@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { Check, Clock, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useRSVPStore } from '@/store/rsvpStore';
-import { createClient } from '@/lib/supabase/client';
 import type { Event } from '@/types';
-import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
 interface RSVPButtonProps {
@@ -20,7 +18,6 @@ export default function RSVPButton({ event, compact = false, currentStatus }: RS
   const { rsvps, rsvpCounts, optimisticRSVP } = useRSVPStore();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
 
   const status = rsvps[event.id] ?? currentStatus ?? null;
   const count = rsvpCounts[event.id] ?? event.rsvp_count;
@@ -35,8 +32,6 @@ export default function RSVPButton({ event, compact = false, currentStatus }: RS
 
     setLoading(true);
     const newStatus = isGoing ? 'cancelled' : 'going';
-
-    // Optimistic update
     optimisticRSVP(event.id, newStatus, count);
 
     try {
@@ -45,14 +40,24 @@ export default function RSVPButton({ event, compact = false, currentStatus }: RS
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ event_id: event.id, status: newStatus }),
       });
-
       if (!response.ok) throw new Error('RSVP failed');
     } catch {
-      // Revert optimistic update
       optimisticRSVP(event.id, isGoing ? 'going' : 'cancelled', count);
     } finally {
       setLoading(false);
     }
+  };
+
+  const goingStyle: React.CSSProperties = {
+    background: 'rgba(16,185,129,0.12)',
+    color: '#34D399',
+    border: '1px solid rgba(16,185,129,0.3)',
+  };
+
+  const defaultStyle: React.CSSProperties = {
+    background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+    color: '#fff',
+    border: 'none',
   };
 
   if (compact) {
@@ -60,52 +65,40 @@ export default function RSVPButton({ event, compact = false, currentStatus }: RS
       <button
         onClick={handleRSVP}
         disabled={loading || event.status === 'cancelled'}
-        className={cn(
-          'w-full py-2 rounded-lg text-sm font-medium transition-all',
-          isGoing
-            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
-            : 'text-white hover:opacity-90',
-          loading && 'opacity-50 cursor-not-allowed'
-        )}
-        style={!isGoing ? { background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' } : {}}
+        style={{
+          width: '100%', padding: '9px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+          cursor: loading || event.status === 'cancelled' ? 'not-allowed' : 'pointer',
+          opacity: loading ? 0.5 : 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+          ...(isGoing ? goingStyle : defaultStyle),
+        }}
       >
         {loading ? (
-          <span className="flex items-center justify-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 animate-spin" /> Loading...
-          </span>
+          <><Clock style={{ width: '13px', height: '13px' }} /> Loading...</>
         ) : isGoing ? (
-          <span className="flex items-center justify-center gap-1.5">
-            <Check className="w-3.5 h-3.5" /> Going ✓
-          </span>
-        ) : (
-          'RSVP Free'
-        )}
+          <><Check style={{ width: '13px', height: '13px' }} /> Going ✓</>
+        ) : 'RSVP Free'}
       </button>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <button
         onClick={handleRSVP}
         disabled={loading || event.status === 'cancelled'}
-        className={cn(
-          'flex items-center gap-2 px-6 py-3 rounded-xl text-base font-semibold transition-all',
-          isGoing
-            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
-            : 'text-white hover:opacity-90',
-          loading && 'opacity-50 cursor-not-allowed'
-        )}
-        style={!isGoing ? { background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' } : {}}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '13px 28px', borderRadius: '12px', fontSize: '15px', fontWeight: 700,
+          cursor: loading || event.status === 'cancelled' ? 'not-allowed' : 'pointer',
+          opacity: loading ? 0.5 : 1,
+          ...(isGoing ? goingStyle : defaultStyle),
+        }}
       >
         {loading ? (
-          <>
-            <Clock className="w-4 h-4 animate-spin" /> Processing...
-          </>
+          <><Clock style={{ width: '16px', height: '16px' }} /> Processing...</>
         ) : isGoing ? (
-          <>
-            <Check className="w-4 h-4" /> You're Going!
-          </>
+          <><Check style={{ width: '16px', height: '16px' }} /> You&apos;re Going!</>
         ) : (
           <span>RSVP &mdash; It&apos;s Free</span>
         )}
@@ -114,9 +107,14 @@ export default function RSVPButton({ event, compact = false, currentStatus }: RS
         <button
           onClick={handleRSVP}
           disabled={loading}
-          className="flex items-center gap-1 px-3 py-3 rounded-xl text-sm text-slate-400 hover:text-red-400 border border-white/10 hover:border-red-400/30 transition-all"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '13px 16px', borderRadius: '12px', fontSize: '13px',
+            color: '#94A3B8', background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
+          }}
         >
-          <X className="w-4 h-4" /> Cancel
+          <X style={{ width: '15px', height: '15px' }} /> Cancel
         </button>
       )}
     </div>

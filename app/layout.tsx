@@ -29,10 +29,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
-      <body className="antialiased min-h-screen" style={{ background: '#0A0F1E', color: '#F8FAFC' }}>
+      <body className="antialiased min-h-screen" style={{ background: '#020710', color: '#F8FAFC' }}>
         <AuthProvider>
           <Navbar />
-          <main>{children}</main>
+          <main style={{ paddingTop: '68px' }}>
+            {children}
+          </main>
           <Footer />
         </AuthProvider>
       </body>

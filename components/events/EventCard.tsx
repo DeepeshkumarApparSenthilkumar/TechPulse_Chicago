@@ -16,65 +16,59 @@ export default function EventCard({ event, showRSVP = true }: EventCardProps) {
   const catClass = getCategoryClass(event.category ?? 'Web Dev');
 
   return (
-    <div className="glass glass-hover rounded-2xl overflow-hidden group">
+    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', overflow: 'hidden', backdropFilter: 'blur(16px)', transition: 'border-color 0.2s, transform 0.2s', display: 'flex', flexDirection: 'column' }} className="glass-hover">
+
       {/* Cover image */}
-      <Link href={`/events/${event.slug}`} className="block relative h-44 overflow-hidden bg-gradient-to-br from-blue-900/40 to-purple-900/40">
+      <Link href={`/events/${event.slug}`} style={{ display: 'block', position: 'relative', height: '176px', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3))', flexShrink: 0 }}>
         {event.cover_image_url ? (
-          <Image
-            src={event.cover_image_url}
-            alt={event.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          <Image src={event.cover_image_url} alt={event.title} fill style={{ objectFit: 'cover' }} />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3))' }}>
-            <span className="text-4xl opacity-30">⚡</span>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '40px', opacity: 0.3 }}>⚡</span>
           </div>
         )}
-        {/* Category badge */}
         {event.category && (
-          <span className={`absolute top-3 left-3 px-2 py-1 rounded-md text-xs font-medium ${catClass}`}>
+          <span className={catClass} style={{ position: 'absolute', top: '10px', left: '10px', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600 }}>
             {event.category}
           </span>
         )}
-        {/* Status badge */}
         {event.status === 'cancelled' && (
-          <span className="absolute top-3 right-3 px-2 py-1 rounded-md text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
+          <span style={{ position: 'absolute', top: '10px', right: '10px', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, background: 'rgba(239,68,68,0.2)', color: '#F87171', border: '1px solid rgba(239,68,68,0.3)' }}>
             Cancelled
           </span>
         )}
       </Link>
 
       {/* Content */}
-      <div className="p-4">
-        <Link href={`/events/${event.slug}`}>
-          <h3 className="font-semibold text-white text-base mb-2 leading-snug group-hover:text-blue-400 transition-colors" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <Link href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
+          <h3 style={{ fontWeight: 600, color: '#fff', fontSize: '14px', marginBottom: '10px', lineHeight: 1.4, fontFamily: 'Space Grotesk, sans-serif' }}>
             {truncate(event.title, 60)}
           </h3>
         </Link>
 
-        <div className="space-y-1.5 mb-3">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Calendar className="w-3.5 h-3.5 flex-shrink-0 text-blue-400" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px', flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#94A3B8' }}>
+            <Calendar style={{ width: '13px', height: '13px', flexShrink: 0, color: '#60A5FA' }} />
             <span>{formatEventDateTime(event.start_time)}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#94A3B8' }}>
             {event.is_online ? (
               <>
-                <Globe className="w-3.5 h-3.5 flex-shrink-0 text-purple-400" />
+                <Globe style={{ width: '13px', height: '13px', flexShrink: 0, color: '#C084FC' }} />
                 <span>Online Event</span>
               </>
             ) : (
               <>
-                <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-cyan-400" />
+                <MapPin style={{ width: '13px', height: '13px', flexShrink: 0, color: '#22D3EE' }} />
                 <span>{truncate(event.venue_name ?? event.venue_address ?? 'Chicago, IL', 35)}</span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Users className="w-3.5 h-3.5 flex-shrink-0 text-emerald-400" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#94A3B8' }}>
+            <Users style={{ width: '13px', height: '13px', flexShrink: 0, color: '#34D399' }} />
             <span>{event.rsvp_count} going</span>
-            {event.is_free && <span className="text-emerald-400 font-medium">· Free</span>}
+            {event.is_free && <span style={{ color: '#34D399', fontWeight: 600 }}>· Free</span>}
           </div>
         </div>
 

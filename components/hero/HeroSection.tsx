@@ -8,161 +8,285 @@ interface HeroSectionProps {
   stats?: { events: number; members: number; organizers: number };
 }
 
+function displayStat(val: number | undefined, fallback: string): string {
+  if (!val || val === 0) return fallback;
+  if (val >= 1000) return `${(val / 1000).toFixed(1)}K+`;
+  return `${val}`;
+}
+
 export default function HeroSection({ stats }: HeroSectionProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const orb1Ref = useRef<HTMLDivElement>(null);
+  const orb2Ref = useRef<HTMLDivElement>(null);
+  const orb3Ref = useRef<HTMLDivElement>(null);
 
+  // Mouse parallax on aurora orbs — throttled to avoid layout thrashing
+  useEffect(() => {
+    let rafId = 0;
+    let mx = 0, my = 0;
+    const onMove = (e: MouseEvent) => { mx = e.clientX; my = e.clientY; };
+    const tick = () => {
+      const x = mx / window.innerWidth - 0.5;
+      const y = my / window.innerHeight - 0.5;
+      if (orb1Ref.current) orb1Ref.current.style.transform = `translate(${x * 50}px, ${y * 35}px)`;
+      if (orb2Ref.current) orb2Ref.current.style.transform = `translate(${-x * 40}px, ${-y * 30}px)`;
+      if (orb3Ref.current) orb3Ref.current.style.transform = `translate(${x * 25}px, ${-y * 45}px)`;
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => { cancelAnimationFrame(rafId); window.removeEventListener('mousemove', onMove); };
+  }, []);
+
+  // Canvas particle network
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles: Array<{
-      x: number; y: number; vx: number; vy: number;
-      radius: number; color: string; opacity: number;
-    }> = [];
-
-    const colors = ['#3B82F6', '#8B5CF6', '#06B6D4', '#EC4899'];
-
-    for (let i = 0; i < 80; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        radius: Math.random() * 2 + 0.5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        opacity: Math.random() * 0.5 + 0.1,
-      });
-    }
-
-    let animationId: number;
-
-    function animate() {
-      animationId = requestAnimationFrame(animate);
-      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
-
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0 || p.x > canvas!.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas!.height) p.vy *= -1;
-
-        ctx!.beginPath();
-        ctx!.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx!.fillStyle = p.color;
-        ctx!.globalAlpha = p.opacity;
-        ctx!.fill();
-        ctx!.globalAlpha = 1;
-      });
-
-      // Draw connections
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
-            ctx!.beginPath();
-            ctx!.moveTo(particles[i].x, particles[i].y);
-            ctx!.lineTo(particles[j].x, particles[j].y);
-            ctx!.strokeStyle = '#3B82F6';
-            ctx!.globalAlpha = (1 - dist / 100) * 0.15;
-            ctx!.lineWidth = 0.5;
-            ctx!.stroke();
-            ctx!.globalAlpha = 1;
-          }
-        }
-      }
-    }
-
-    animate();
-
-    const handleResize = () => {
+    const setSize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
-    window.addEventListener('resize', handleResize);
+    setSize();
 
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
+    // Flat RGB values for connections (no gradient objects per frame)
+    const COLORS_RGB = [
+      [59, 130, 246],   // blue
+      [139, 92, 246],   // purple
+      [6, 182, 212],    // cyan
+      [16, 185, 129],   // emerald
+    ];
+
+    interface Particle {
+      x: number; y: number;
+      vx: number; vy: number;
+      radius: number; baseRadius: number;
+      rgb: number[]; opacity: number;
+      isHub: boolean; phase: number;
+    }
+
+    const particles: Particle[] = [];
+
+    // Hub nodes
+    for (let i = 0; i < 6; i++) {
+      const r = 2.5 + Math.random() * 1.5;
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        radius: r, baseRadius: r,
+        rgb: COLORS_RGB[Math.floor(Math.random() * COLORS_RGB.length)],
+        opacity: 0.9, isHub: true,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // Regular particles — reduced from 130 → 55
+    for (let i = 0; i < 55; i++) {
+      const r = 0.8 + Math.random() * 1.2;
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
+        radius: r, baseRadius: r,
+        rgb: COLORS_RGB[Math.floor(Math.random() * COLORS_RGB.length)],
+        opacity: 0.15 + Math.random() * 0.3,
+        isHub: false,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    let animId: number;
+    let t = 0;
+    let frame = 0;
+    const MAX_DIST = 150;
+    const MAX_DIST_SQ = MAX_DIST * MAX_DIST;
+
+    const draw = () => {
+      animId = requestAnimationFrame(draw);
+      frame++;
+      // Throttle to ~30fps
+      if (frame % 2 !== 0) return;
+      t += 0.024;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Scan line
+      const scanY = ((t * 22) % (canvas.height + 80)) - 40;
+      ctx.fillStyle = 'rgba(59,130,246,0.04)';
+      ctx.fillRect(0, scanY - 20, canvas.width, 40);
+
+      // Update positions
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.phase += 0.022;
+        if (p.x < -20) p.x = canvas.width + 20;
+        else if (p.x > canvas.width + 20) p.x = -20;
+        if (p.y < -20) p.y = canvas.height + 20;
+        else if (p.y > canvas.height + 20) p.y = -20;
+        if (p.isHub) p.radius = p.baseRadius + Math.sin(p.phase) * 1.0;
+      }
+
+      // Connections — use flat rgba instead of createLinearGradient
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < particles.length; i++) {
+        const pi = particles[i];
+        for (let j = i + 1; j < particles.length; j++) {
+          const pj = particles[j];
+          const dx = pi.x - pj.x;
+          const dy = pi.y - pj.y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < MAX_DIST_SQ) {
+            const fade = 1 - Math.sqrt(distSq) / MAX_DIST;
+            const alpha = fade * fade * (pi.isHub || pj.isHub ? 0.25 : 0.1);
+            const [r, g, b] = pi.rgb;
+            ctx.strokeStyle = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+            ctx.beginPath();
+            ctx.moveTo(pi.x, pi.y);
+            ctx.lineTo(pj.x, pj.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw particles
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const [r, g, b] = p.rgb;
+        if (p.isHub) {
+          // Simple radial glow — reuse the same gradient coords
+          const g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 7);
+          g2.addColorStop(0, `rgba(${r},${g},${b},0.25)`);
+          g2.addColorStop(1, 'transparent');
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius * 7, 0, Math.PI * 2);
+          ctx.fillStyle = g2;
+          ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        const alpha = p.isHub ? p.opacity * (0.75 + Math.sin(p.phase) * 0.25) : p.opacity;
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+        ctx.fill();
+      }
     };
+
+    draw();
+    window.addEventListener('resize', setSize);
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', setSize); };
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden grid-bg">
-      {/* Particle canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+    <section style={{
+      position: 'relative',
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      background: 'radial-gradient(ellipse at 20% 30%, #0B1628 0%, #050A14 50%, #020710 100%)',
+    }}>
+      {/* Aurora orbs */}
+      <div ref={orb1Ref} className="aurora-orb aurora-orb-1" />
+      <div ref={orb2Ref} className="aurora-orb aurora-orb-2" />
+      <div ref={orb3Ref} className="aurora-orb aurora-orb-3" />
+      <div className="aurora-orb aurora-orb-4" />
 
-      {/* Gradient orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, #3B82F6, transparent)' }} />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, #8B5CF6, transparent)' }} />
+      {/* Animated grid */}
+      <div className="hero-grid" />
+
+      {/* Canvas */}
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }} />
+
+      {/* Edge vignette */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(2,7,16,0.7) 100%)',
+      }} />
 
       {/* Content */}
-      <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-blue-400 mb-8 border border-blue-500/20">
-          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-          Chicago's #1 Tech Community Platform
+      <div style={{
+        position: 'relative', zIndex: 10,
+        textAlign: 'center',
+        maxWidth: '880px',
+        margin: '0 auto',
+        padding: '80px 28px 60px',
+      }}>
+        {/* Live badge */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '10px',
+          padding: '8px 20px', borderRadius: '100px',
+          background: 'rgba(59,130,246,0.1)',
+          border: '1px solid rgba(59,130,246,0.35)',
+          fontSize: '13px', color: '#60A5FA', fontWeight: 500,
+          marginBottom: '36px',
+          backdropFilter: 'blur(12px)',
+        }}>
+          <span className="hero-live-dot" />
+          Chicago&apos;s #1 Tech Community Platform
+          <span style={{ background: 'rgba(59,130,246,0.2)', padding: '1px 8px', borderRadius: '100px', fontSize: '11px', fontWeight: 700 }}>LIVE</span>
         </div>
 
         {/* Headline */}
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-          <span className="text-white">Chicago's</span>
+        <h1 style={{
+          fontFamily: 'Space Grotesk, sans-serif',
+          fontWeight: 800,
+          fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
+          lineHeight: 1.08,
+          letterSpacing: '-0.03em',
+          marginBottom: '28px',
+        }}>
+          <span style={{ color: '#F1F5F9' }}>Chicago&apos;s</span>
           <br />
-          <span className="gradient-text">Tech Community</span>
+          <span className="hero-gradient-text">Tech Community</span>
           <br />
-          <span className="text-white">Hub</span>
+          <span style={{ color: '#F1F5F9' }}>Hub</span>
         </h1>
 
-        <p className="text-lg sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Discover and host tech events, connect with Chicago's developer community, and stay ahead with AI-powered FinOps insights.
+        {/* Sub */}
+        <p style={{
+          fontSize: 'clamp(1rem, 1.8vw, 1.2rem)',
+          color: '#94A3B8', lineHeight: 1.8,
+          maxWidth: '580px', margin: '0 auto 52px',
+        }}>
+          Discover and host tech events, connect with Chicago&apos;s developer community, and stay ahead with AI-powered FinOps insights.
         </p>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <Link
-            href="/events"
-            className="flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold text-white transition-all hover:opacity-90 hover:-translate-y-0.5"
-            style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}
-          >
-            Explore Events <ArrowRight className="w-4 h-4" />
+        {/* CTA buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '80px' }}>
+          <Link href="/events" className="hero-btn-primary">
+            Explore Events <ArrowRight style={{ width: '18px', height: '18px', flexShrink: 0 }} />
           </Link>
-          <Link
-            href="/create-event"
-            className="flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold text-white border border-white/20 glass-hover transition-all hover:border-blue-500/40"
-          >
+          <Link href="/create-event" className="hero-btn-secondary">
             Host an Event
           </Link>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
-          <div className="glass rounded-2xl p-4 text-center">
-            <Calendar className="w-5 h-5 text-blue-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              {stats?.events ?? '50+'}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', maxWidth: '440px', margin: '0 auto' }}>
+          {[
+            { icon: Calendar, color: '#3B82F6', val: displayStat(stats?.events, '50+'), label: 'Events' },
+            { icon: Users,    color: '#8B5CF6', val: displayStat(stats?.members, '2K+'), label: 'Members' },
+            { icon: Building2,color: '#06B6D4', val: displayStat(stats?.organizers, '100+'), label: 'Organizers' },
+          ].map(({ icon: Icon, color, val, label }) => (
+            <div key={label} className="hero-stat-card">
+              <Icon style={{ width: '18px', height: '18px', color, display: 'block', margin: '0 auto 10px' }} />
+              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1 }}>{val}</div>
+              <div style={{ fontSize: '10px', color: '#64748B', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>{label}</div>
             </div>
-            <div className="text-xs text-slate-400">Events/Month</div>
-          </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <Users className="w-5 h-5 text-purple-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              {stats?.members ?? '2K+'}
-            </div>
-            <div className="text-xs text-slate-400">Members</div>
-          </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <Building2 className="w-5 h-5 text-cyan-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              {stats?.organizers ?? '100+'}
-            </div>
-            <div className="text-xs text-slate-400">Organizers</div>
-          </div>
+          ))}
+        </div>
+
+        {/* Scroll indicator */}
+        <div style={{ marginTop: '56px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', opacity: 0.4 }}>
+          <div style={{ fontSize: '11px', color: '#64748B', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Scroll</div>
+          <div className="scroll-chevron" />
         </div>
       </div>
     </section>

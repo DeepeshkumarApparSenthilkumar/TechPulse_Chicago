@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -18,13 +18,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
   }
 
-  // Validate topics is an array of strings (optional field)
   const safeName = typeof name === 'string' ? name.slice(0, 100) : null;
   const safeTopics = Array.isArray(topics)
     ? topics.filter((t) => typeof t === 'string').slice(0, 20)
     : [];
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { error } = await supabase
     .from('newsletter_subscriptions')
     .upsert({ email, name: safeName, topics: safeTopics, is_active: true }, { onConflict: 'email' });

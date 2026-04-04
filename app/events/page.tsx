@@ -1,3 +1,5 @@
+export const revalidate = 30;
+
 import { createClient } from '@/lib/supabase/server';
 import EventGrid from '@/components/events/EventGrid';
 import EventFilters from '@/components/events/EventFilters';
@@ -19,62 +21,76 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
     .eq('status', 'published');
 
   if (params.category) query = query.eq('category', params.category);
-  if (params.format === 'online') query = query.eq('is_online', true);
+  if (params.format === 'online')    query = query.eq('is_online', true);
   if (params.format === 'in-person') query = query.eq('is_online', false);
   if (params.q) query = query.ilike('title', `%${params.q}%`);
-
-  if (params.sort === 'popular') {
-    query = query.order('rsvp_count', { ascending: false });
-  } else {
-    query = query.order('start_time', { ascending: true });
-  }
+  if (params.sort === 'popular') query = query.order('rsvp_count', { ascending: false });
+  else query = query.order('start_time', { ascending: true });
 
   const { data: events } = await query.limit(24);
 
   return (
-    <div className="min-h-screen pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div style={{ minHeight: '100vh', padding: '48px 0 80px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
+
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#fff', marginBottom: '8px', fontFamily: 'Space Grotesk, sans-serif' }}>
             Explore <span className="gradient-text">Events</span>
           </h1>
-          <p className="text-slate-400">Discover Chicago's best tech events</p>
+          <p style={{ color: '#94A3B8', fontSize: '15px' }}>Discover Chicago&apos;s best tech events</p>
         </div>
 
-        {/* Search bar */}
-        <div className="relative mb-8 max-w-xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        {/* Search */}
+        <div style={{ position: 'relative', maxWidth: '560px', marginBottom: '32px' }}>
+          <Search style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#64748B', pointerEvents: 'none' }} />
           <form>
             <input
               name="q"
               type="search"
               defaultValue={params.q ?? ''}
               placeholder="Search events..."
-              className="input-dark w-full pl-11 pr-4 py-3 rounded-xl text-sm"
+              style={{
+                width: '100%',
+                paddingLeft: '42px', paddingRight: '16px',
+                paddingTop: '12px', paddingBottom: '12px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                fontSize: '14px', color: '#F8FAFC',
+                outline: 'none',
+              }}
             />
           </form>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters sidebar */}
-          <aside className="lg:w-56 flex-shrink-0">
+        {/* Layout: sidebar + content */}
+        <div className="layout-sidebar">
+          {/* Filters */}
+          <aside className="layout-sidebar-nav">
             <Suspense>
               <EventFilters />
             </Suspense>
           </aside>
 
-          {/* Events grid */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-sm text-slate-400">
-                {events?.length ?? 0} events found
+          {/* Events */}
+          <div className="layout-sidebar-content">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', gap: '16px' }}>
+              <p style={{ fontSize: '14px', color: '#64748B' }}>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{events?.length ?? 0}</span> events found
               </p>
-              <form className="flex items-center gap-2">
+              <form>
                 <select
                   name="sort"
                   defaultValue={params.sort ?? 'upcoming'}
-                  className="input-dark px-3 py-2 rounded-lg text-sm"
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    padding: '8px 14px',
+                    fontSize: '13px', color: '#CBD5E1',
+                    cursor: 'pointer',
+                  }}
                 >
                   <option value="upcoming">Upcoming</option>
                   <option value="popular">Most Popular</option>

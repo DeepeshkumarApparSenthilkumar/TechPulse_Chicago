@@ -8,13 +8,13 @@ interface EventGridProps {
 
 function SkeletonCard() {
   return (
-    <div className="glass rounded-2xl overflow-hidden">
-      <div className="h-44 shimmer" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 rounded shimmer" />
-        <div className="h-3 w-3/4 rounded shimmer" />
-        <div className="h-3 w-1/2 rounded shimmer" />
-        <div className="h-8 rounded-lg shimmer mt-2" />
+    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', overflow: 'hidden' }}>
+      <div style={{ height: '176px' }} className="shimmer" />
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ height: '16px', borderRadius: '6px' }} className="shimmer" />
+        <div style={{ height: '12px', width: '75%', borderRadius: '6px' }} className="shimmer" />
+        <div style={{ height: '12px', width: '50%', borderRadius: '6px' }} className="shimmer" />
+        <div style={{ height: '32px', borderRadius: '8px', marginTop: '6px' }} className="shimmer" />
       </div>
     </div>
   );
@@ -23,7 +23,7 @@ function SkeletonCard() {
 export default function EventGrid({ events, loading = false }: EventGridProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="events-grid">
         {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
       </div>
     );
@@ -31,16 +31,18 @@ export default function EventGrid({ events, loading = false }: EventGridProps) {
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-20">
-        <div className="text-5xl mb-4">🔍</div>
-        <h3 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>No events found</h3>
-        <p className="text-slate-400">Try adjusting your filters or check back later.</p>
+      <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+        <div style={{ fontSize: '56px', marginBottom: '16px' }}>🔍</div>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#fff', marginBottom: '8px', fontFamily: 'Space Grotesk, sans-serif' }}>
+          No events found
+        </h3>
+        <p style={{ color: '#94A3B8', fontSize: '14px' }}>Try adjusting your filters or check back later.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="events-grid">
       {events.map((event) => (
         <EventCard key={event.id} event={event} />
       ))}

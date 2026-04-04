@@ -1,54 +1,80 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { Zap, Twitter, Linkedin, Github } from 'lucide-react';
 
-const categories = ['AI/ML', 'Web Dev', 'DevOps', 'FinOps', 'Startup'];
 const quickLinks = [
   { href: '/events', label: 'Explore Events' },
   { href: '/create-event', label: 'Host an Event' },
   { href: '/newsletter', label: 'Newsletter' },
+  { href: '/dashboard', label: 'Dashboard' },
+];
+
+const categories = ['AI/ML', 'Web Dev', 'DevOps', 'FinOps', 'Startup', 'Networking'];
+const socials = [
+  { label: 'Twitter', Icon: Twitter },
+  { label: 'LinkedIn', Icon: Linkedin },
+  { label: 'GitHub', Icon: Github },
 ];
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) return;
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      setStatus(res.ok ? 'done' : 'error');
+    } catch {
+      setStatus('error');
+    }
+  };
+
   return (
-    <footer className="border-t border-white/10 mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer style={{ borderTop: '1px solid rgba(59,130,246,0.15)', background: 'rgba(2,5,14,0.95)', marginTop: '0' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '80px 32px 48px' }}>
+
+        {/* Grid */}
+        <div className="footer-grid">
+
           {/* Brand */}
-          <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>
-                <Zap className="w-4 h-4 text-white" />
+          <div>
+            <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '16px', textDecoration: 'none' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Zap style={{ width: '18px', height: '18px', color: '#fff' }} />
               </div>
-              <span className="font-bold text-lg" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                <span className="text-white">TechPulse</span>{' '}
-                <span className="gradient-text">Chicago</span>
+              <span style={{ fontWeight: 700, fontSize: '16px', fontFamily: 'Space Grotesk, sans-serif' }}>
+                <span style={{ color: '#fff' }}>TechPulse</span>{' '}
+                <span style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Chicago</span>
               </span>
             </Link>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Discover. Connect. Build.<br />Chicago's premier tech community hub.
+            <p style={{ color: '#64748B', fontSize: '13px', lineHeight: 1.7, marginBottom: '20px', maxWidth: '260px' }}>
+              Chicago&apos;s premier tech community hub. Discover events, connect with developers, and stay ahead with AI-powered FinOps insights.
             </p>
-            <div className="flex items-center gap-3 mt-4">
-              <a href="#" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="#" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a href="#" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-                <Github className="w-4 h-4" />
-              </a>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {socials.map(({ label, Icon }) => (
+                <a key={label} href="#" style={{ width: '34px', height: '34px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', transition: 'all 0.2s', textDecoration: 'none' }}>
+                  <Icon style={{ width: '15px', height: '15px' }} />
+                </a>
+              ))}
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Quick Links</h3>
-            <ul className="space-y-2">
+            <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#fff', marginBottom: '20px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Links</h3>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {quickLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-slate-400 hover:text-white transition-colors">
+                  <Link href={link.href} style={{ fontSize: '13px', color: '#64748B', textDecoration: 'none', transition: 'color 0.2s' }}>
                     {link.label}
                   </Link>
                 </li>
@@ -58,11 +84,11 @@ export default function Footer() {
 
           {/* Categories */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Categories</h3>
-            <ul className="space-y-2">
+            <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#fff', marginBottom: '20px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Categories</h3>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {categories.map((cat) => (
                 <li key={cat}>
-                  <Link href={`/events?category=${encodeURIComponent(cat)}`} className="text-sm text-slate-400 hover:text-white transition-colors">
+                  <Link href={`/events?category=${encodeURIComponent(cat)}`} style={{ fontSize: '13px', color: '#64748B', textDecoration: 'none', transition: 'color 0.2s' }}>
                     {cat}
                   </Link>
                 </li>
@@ -70,34 +96,47 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter Subscribe */}
+          {/* Newsletter */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">FinOps Newsletter</h3>
-            <p className="text-sm text-slate-400 mb-3">Monthly AI-powered cloud cost insights.</p>
-            <form className="flex flex-col gap-2" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="email"
-                placeholder="your@email.com"
-                className="input-dark px-3 py-2 rounded-lg text-sm w-full"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-all"
-                style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}
-              >
-                Subscribe
-              </button>
-            </form>
+            <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#fff', marginBottom: '8px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>FinOps Digest</h3>
+            <p style={{ fontSize: '13px', color: '#64748B', lineHeight: 1.6, marginBottom: '16px' }}>
+              Monthly AI-powered cloud cost insights. Free, always.
+            </p>
+            {status === 'done' ? (
+              <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', color: '#34D399' }}>
+                ✓ You&apos;re subscribed!
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#F8FAFC', outline: 'none', width: '100%' }}
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  style={{ padding: '10px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', cursor: 'pointer', opacity: status === 'loading' ? 0.6 : 1 }}
+                >
+                  {status === 'loading' ? 'Subscribing...' : 'Subscribe — Free'}
+                </button>
+                {status === 'error' && <p style={{ fontSize: '12px', color: '#F87171', margin: 0 }}>Something went wrong. Try again.</p>}
+              </form>
+            )}
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-400">
+        {/* Bottom */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '48px', paddingTop: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+          <p style={{ fontSize: '13px', color: '#334155' }}>
             © {new Date().getFullYear()} TechPulse Chicago. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="text-sm text-slate-400 hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="text-sm text-slate-400 hover:text-white transition-colors">Terms of Service</Link>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <Link href="/newsletter" style={{ fontSize: '13px', color: '#334155', textDecoration: 'none' }}>Newsletter</Link>
+            <Link href="/events" style={{ fontSize: '13px', color: '#334155', textDecoration: 'none' }}>Events</Link>
           </div>
         </div>
       </div>
