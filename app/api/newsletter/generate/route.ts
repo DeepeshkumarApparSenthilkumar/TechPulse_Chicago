@@ -1,20 +1,37 @@
-import { createServiceClient } from '@/lib/supabase/server';
+import { createServiceClient, createClient } from '@/lib/supabase/server';
 import { generateNewsletterContent } from '@/lib/anthropic';
 import { sendNewsletterBatch } from '@/lib/email';
 import { NextResponse } from 'next/server';
 
-function isAuthorized(request: Request): boolean {
+async function isAuthorized(request: Request): Promise<boolean> {
   const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    console.warn('CRON_SECRET is not set — rejecting request. Set CRON_SECRET to enable this endpoint.');
+  if (cronSecret) {
+    // 1. Bearer token header (curl / manual triggers)
+    const authHeader = request.headers.get('authorization');
+    if (authHeader === `Bearer ${cronSecret}`) return true;
+    // 2. Query param (Vercel cron — cannot send custom headers)
+    const url = new URL(request.url);
+    if (url.searchParams.get('secret') === cronSecret) return true;
+  }
+
+  // 2. Accept authenticated admin session from the browser
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    return profile?.role === 'admin';
+  } catch {
     return false;
   }
-  const authHeader = request.headers.get('authorization');
-  return authHeader === `Bearer ${cronSecret}`;
 }
 
 async function run(request: Request, force = false) {
-  if (!isAuthorized(request)) {
+  if (!await isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -86,7 +103,7 @@ async function run(request: Request, force = false) {
 
     const needsToken = subscribers.filter((s) => !s.unsubscribe_token);
     if (needsToken.length > 0) {
-      await Promise.all(
+      await Promise.allSettled(
         needsToken.map((s) =>
           supabase
             .from('newsletter_subscriptions')

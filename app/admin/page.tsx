@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { formatEventDateTime } from '@/lib/utils';
 import type { Event, Profile, NewsletterIssue } from '@/types';
-import { Users, Send } from 'lucide-react';
+import { Users } from 'lucide-react';
+import GenerateNewsletterButton from './GenerateNewsletterButton';
 
 const row: React.CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -72,11 +73,7 @@ export default async function AdminPage() {
               <Link href="/admin/subscribers" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#CBD5E1', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none' }}>
                 <Users style={{ width: '14px', height: '14px' }} /> Manage Subscribers
               </Link>
-              <form action="/api/newsletter/generate" method="POST">
-                <button type="submit" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(59,130,246,0.35)' }}>
-                  <Send style={{ width: '14px', height: '14px' }} /> Generate & Send
-                </button>
-              </form>
+              <GenerateNewsletterButton />
             </div>
           </div>
           {(newsletters as NewsletterIssue[] ?? []).length === 0 ? (

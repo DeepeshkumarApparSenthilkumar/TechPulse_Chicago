@@ -21,6 +21,12 @@ export default async function UnsubscribePage({ searchParams }: Props) {
       message: 'We could not process your unsubscribe request. Please try again or contact us.',
       bg: 'rgba(239,68,68,0.15)',
     },
+    already: {
+      icon: <CheckCircle className="w-12 h-12 text-slate-400" />,
+      title: 'Already unsubscribed',
+      message: "You're already unsubscribed from the FinOps Digest. No further action needed.",
+      bg: 'rgba(100,116,139,0.15)',
+    },
     invalid: {
       icon: <AlertCircle className="w-12 h-12 text-amber-400" />,
       title: 'Invalid unsubscribe link',

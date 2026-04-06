@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/newsletter/generate",
+      "path": "/api/newsletter/generate?secret=${CRON_SECRET}",
       "schedule": "0 9 1 * *"
     }
   ]

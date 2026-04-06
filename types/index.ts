@@ -55,6 +55,7 @@ export interface NewsletterSubscription {
   name: string | null;
   topics: string[] | null;
   is_active: boolean;
+  unsubscribe_token: string | null;
   subscribed_at: string;
 }
 

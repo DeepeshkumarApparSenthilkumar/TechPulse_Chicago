@@ -13,9 +13,9 @@ const quickLinks = [
 
 const categories = ['AI/ML', 'Web Dev', 'DevOps', 'FinOps', 'Startup', 'Networking'];
 const socials = [
-  { label: 'Twitter', Icon: Twitter },
-  { label: 'LinkedIn', Icon: Linkedin },
-  { label: 'GitHub', Icon: Github },
+  { label: 'Twitter', Icon: Twitter, href: 'https://twitter.com/techpulsechicago' },
+  { label: 'LinkedIn', Icon: Linkedin, href: 'https://linkedin.com/company/techpulsechicago' },
+  { label: 'GitHub', Icon: Github, href: 'https://github.com/DeepeshkumarApparSenthilkumar/TechPulse_Chicago' },
 ];
 
 export default function Footer() {
@@ -60,8 +60,8 @@ export default function Footer() {
               Chicago&apos;s premier tech community hub. Discover events, connect with developers, and stay ahead with AI-powered FinOps insights.
             </p>
             <div style={{ display: 'flex', gap: '8px' }}>
-              {socials.map(({ label, Icon }) => (
-                <a key={label} href="#" style={{ width: '34px', height: '34px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', transition: 'all 0.2s', textDecoration: 'none' }}>
+              {socials.map(({ label, Icon, href }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ width: '34px', height: '34px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', transition: 'all 0.2s', textDecoration: 'none' }}>
                   <Icon style={{ width: '15px', height: '15px' }} />
                 </a>
               ))}

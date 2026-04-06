@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Search, Check } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import type { RSVP } from '@/types';
 
 interface Props {
@@ -14,7 +13,7 @@ export default function CheckinClient({ rsvps: initialRsvps, eventId }: Props) {
   const [rsvps, setRsvps] = useState(initialRsvps);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState<string | null>(null);
-  const supabase = createClient();
+  const [error, setError] = useState<string | null>(null);
 
   const filtered = rsvps.filter((r) =>
     r.profile?.full_name?.toLowerCase().includes(search.toLowerCase())
@@ -22,20 +21,34 @@ export default function CheckinClient({ rsvps: initialRsvps, eventId }: Props) {
 
   const handleCheckin = async (rsvpId: string, currentStatus: boolean) => {
     setLoading(rsvpId);
+    setError(null);
     const checked_in = !currentStatus;
-    await supabase.from('rsvps').update({
-      checked_in,
-      checked_in_at: checked_in ? new Date().toISOString() : null,
-    }).eq('id', rsvpId);
-    setRsvps((prev) => prev.map((r) => r.id === rsvpId ? { ...r, checked_in } : r));
-    setLoading(null);
+    try {
+      const res = await fetch('/api/checkin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rsvp_id: rsvpId, checked_in }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? 'Check-in failed. Please try again.');
+        return;
+      }
+      setRsvps((prev) => prev.map((r) => r.id === rsvpId ? { ...r, checked_in } : r));
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(null);
+    }
   };
-
-  // suppress unused import warning
-  void eventId;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {error && (
+        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171', fontSize: '13px' }}>
+          {error}
+        </div>
+      )}
       {/* Search */}
       <div style={{ position: 'relative' }}>
         <Search style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '15px', height: '15px', color: '#475569', pointerEvents: 'none' }} />
